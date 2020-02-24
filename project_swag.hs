@@ -38,3 +38,4 @@ fightschono = do
     putStrLn "schonon tappar det totalt och tar upp en becknaväska full med tegelsten."
     putStrLn "schonon slog ihjäl Einar, RIP Einar 2002-09-05"
 
+--fuck off
