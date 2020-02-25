@@ -1,5 +1,6 @@
 import Control.Exception
 import Prelude hiding(catch)
+import System.Random
 
 
 
