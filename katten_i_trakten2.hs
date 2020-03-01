@@ -85,8 +85,6 @@ updateFunc w game
   | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 3 }
   | otherwise = game
 
-
-
 fight :: EinarGame -> EinarGame
 fight game
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
