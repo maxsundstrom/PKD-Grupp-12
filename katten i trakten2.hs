@@ -9,7 +9,6 @@ import Graphics.Gloss.Interface.IO.Game
 window :: Display
 window = FullScreen
 
-
 data EinarGame = Game
     { state :: String
     , einarX :: Float
@@ -18,8 +17,12 @@ data EinarGame = Game
     , aDown :: Bool
     , sDown :: Bool
     , wDown :: Bool
-    ,currenDia :: String
-    ,nextDia :: [String]
+    , eHP :: Int
+    , einarHP :: Int
+    , turn :: Bool
+    , randomGen :: StdGen
+    , currenDia :: String
+    , nextDia :: [String]
     } deriving Show
 
 {-The function that runs the game with the help of all the other functions -}
@@ -31,12 +34,15 @@ render :: EinarGame -> Picture
 render game
     | state game == "menu" = pictures start
     | state game == "game" = pictures einar
+    | state game == "fight" = pictures fight
     | state game == "talk" = pictures ainahead
+    | otherwise = pictures []
         where
             start = [translate (-650) 0 (scale 0.45 0.5 (text "Play Game = p | Quit game = escape"))]
-            einar = [ translate 325 200 (schonoSprite), translate (-500) (0) (ainaSprite) ,translate (einarX game) (einarY game) (einarSprite)]
+            einar = [translate (einarX game) (einarY game) (einarSprite), translate schonoSpriteX schonoSpriteY (schonoSprite) , translate (-500) 200 (ainaCarSprite), translate (-500) (0) (ainaSprite)]
             ainahead = [translate 0 0 (ainaSprite), translate 50 0 (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
-
+            fight = [translate 100 100 $ text (show (eHP game)), translate 100 250 $ text (show (einarHP game)), translate (-100) 0 einarSprite]
+            
 {-The initial state of the game-}
 initial :: EinarGame
 initial = Game
@@ -47,9 +53,17 @@ initial = Game
     , aDown = False
     , sDown = False
     , wDown = False
+    , eHP = 10
+    , einarHP = 20
+    , turn = True
+    , randomGen = mkStdGen 1
     , currenDia = head diapolis1
     , nextDia = tail diapolis1
     }
+schonoSpriteX :: Float
+schonoSpriteX = 325
+schonoSpriteY :: Float
+schonoSpriteY = 200
 
 {- Changes the state of the game depending on different inputs -}
 inputHandler :: Event -> EinarGame -> EinarGame
@@ -65,55 +79,66 @@ inputHandler (EventKey (Char 'w') keyState _ _) game
 inputHandler (EventKey (Char 'a') keyState _ _) game
   | (state game) == "game" && keyState == Down = game { aDown = True }
   | (state game) == "game" && keyState == Up = game { aDown = False }
-
 inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" }
 inputHandler (EventKey (Char 't') Down _ _ ) game | (state game) == "talk" = talkingfunc game
+inputHandler (EventKey (SpecialKey keySpace) Down _ _) game
+  | (state game) == "fight" = fight game
+inputHandler (EventKey (Char 'p') down _ _) game 
+    | (state game) == "menu" = game { state = "game" }
 inputHandler _ game = game
 
-{- Changes the cordinates of einar which makes him move -}
 updateFunc :: Float -> EinarGame -> EinarGame
-updateFunc w game
-  | (state game) == "game" && (dDown game) = game { einarX = (einarX game) + 2 }
-  | (state game) == "game" && (aDown game) = game { einarX = (einarX game) - 2 }
-  | (state game) == "game" && (sDown game) = game { einarY = (einarY game) - 2 }
-  | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 2 }
+updateFunc w game  
+{- Changes the cordinates of einar which makes him move -}
+  | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "fight", eHP = 10, einarHP = 20}
   | (state game) == "game" && abs((einarX game) - ainaSpriteX) < 50 && abs((einarY game) - ainaSpriteY) < 50 = game {state = "talk"}
+  | (state game) == "game" && (dDown game) = game { einarX = (einarX game) + 3 }
+  | (state game) == "game" && (aDown game) = game { einarX = (einarX game) - 3 }
+  | (state game) == "game" && (sDown game) = game { einarY = (einarY game) - 3 }
+  | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 3 }
+  | otherwise = game
   | otherwise = game
 
+fight :: EinarGame -> EinarGame
+fight game
+    | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
+    | (eHP game) <= 0 = game {state = "game", einarX = 0, einarY = 0}
+    | (turn game) = 
+      let (gen1, gen2) = split (randomGen game)
+      in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2}
 
+{- The picture of the police car -}
+ainaCarSprite :: Picture
+ainaCarSprite = pictures 
+    [ translate (-4) (40) (color black (rectangleSolid 3 126))   -- Car left side
+    , translate (120) (101) (color black (rectangleSolid 250 3)) -- Car top
+    , translate (120) (-23) (color black (rectangleSolid 250 3)) -- Car bottom
+    , translate (245) (40) (color black (rectangleSolid 3 126))  -- Car right side
+    , translate (30) (-20) (color black (circleSolid 20))        -- Back wheel
+    , translate (212) (-20) (color black (circleSolid 20))       -- Front wheel
+    , translate 60 25 (color black (scale 0.3 0.3 (text "Polis")))
+    ]
+
+{- The picture of the police man ("aina") -}
+ainaSprite :: Picture
+ainaSprite = pictures 
+  [ translate (-4) (-40) (color (makeColorI 43 161 204 255) (rectangleSolid 20 60))   -- Body light blue
+  , translate (-4) (-10) (color (makeColorI 255 173 201 255) (circleSolid 15))        -- Head
+  , color (makeColorI 2 11 64 255) (rectangleSolid 40 10)                             -- Hat bottom dark blue
+  , translate (-5) 10 (color (makeColorI 2 11 64 255) (rectangleSolid 30 20))         -- Hat top
+  , translate (-18) 5 (color white (scale 0.08 0.1 (text "Aina")))                    -- Hat text
+  , translate (-4) (-60) (color (makeColorI 2 11 64 255) (rectangleSolid 20 15))      -- Pants
+  , translate   1 (-45) (color (makeColorI 2 11 64 255) (rectangleSolid 5 40))        -- Pants 2
+  , translate (-7) (-45) (color (makeColorI 2 11 64 255) (rectangleSolid 5 40))       -- Pants 3
+  , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))         -- Hands
+  ]
 {- Keeps track of the x cordinate where the aina is positioned-}
 ainaSpriteX :: Float
 ainaSpriteX  = (-500)
 
 {- Keeps track of the y cordinate where the aina is positioned -}
 ainaSpriteY :: Float
-ainaSpriteY = 0  
-
-{- The picture of the police car -}
-ainaCarSprite :: Picture
-ainaCarSprite = pictures 
-    [ translate (-4) (40) (color black (rectangleSolid 3 126))     -- Car left side
-    , translate (120) (101) (color black (rectangleSolid 250 3))   -- Car top
-    , translate (120) (-23) (color black (rectangleSolid 250 3))   -- Car bottom
-    , translate (245) (40) (color black (rectangleSolid 3 126))    -- Car right side
-    , translate (30) (-20) (color black (circleSolid 20))          -- Back wheel
-    , translate (212) (-20) (color black (circleSolid 20))         -- Front wheel
-    , translate 60 25 (color black (scale 0.3 0.3 (text "Polis"))) -- Police text
-    ]
-
-{- The picture of the police man ("aina") -}
-ainaSprite :: Picture
-ainaSprite = pictures 
-    [ translate (-4) (-40) (color (makeColorI 43 161 204 255) (rectangleSolid 20 60))   -- Body light blue
-  , translate (-4) (-10) (color (makeColorI 255 173 201 255) (circleSolid 15))          -- Head
-  , color (makeColorI 2 11 64 255) (rectangleSolid 40 10)                               -- Hat bottom dark blue
-  , translate (-5) 10 (color (makeColorI 2 11 64 255) (rectangleSolid 30 20))           -- Hat top
-  , translate (-18) 5 (color white (scale 0.08 0.1 (text "Aina")))                      -- Hat text
-  , translate (-4) (-60) (color (makeColorI 2 11 64 255) (rectangleSolid 20 15))        -- Pants
-  , translate   1 (-45) (color (makeColorI 2 11 64 255) (rectangleSolid 5 40))          -- Pants 2
-  , translate (-7) (-45) (color (makeColorI 2 11 64 255) (rectangleSolid 5 40))         -- Pants 3
-  , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))           -- Hands
-  ]
+ainaSpriteY = 0      
 
 {- The picture of Einar -}
 einarSprite :: Picture
