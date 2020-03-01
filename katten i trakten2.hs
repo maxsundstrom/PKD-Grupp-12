@@ -1,10 +1,14 @@
 module Einar(einar) where
 
+import System.Random
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 
+
+{- Renders the picture on a fullscreen -}
 window :: Display
 window = FullScreen
+
 
 data EinarGame = Game
     { state :: String
@@ -14,21 +18,26 @@ data EinarGame = Game
     , aDown :: Bool
     , sDown :: Bool
     , wDown :: Bool
+    ,currenDia :: String
+    ,nextDia :: [String]
     } deriving Show
 
+{-The function that runs the game with the help of all the other functions -}
 main :: IO ()
 main = play window white 60 initial render inputHandler updateFunc
 
-
+{-Renders a appropriate picture depending on what state the game is currently -}
 render :: EinarGame -> Picture
 render game
     | state game == "menu" = pictures start
     | state game == "game" = pictures einar
-    | otherwise = pictures []
+    | state game == "talk" = pictures ainahead
         where
             start = [translate (-650) 0 (scale 0.45 0.5 (text "Play Game = p | Quit game = escape"))]
-            einar = [translate (einarX game) (einarY game) (einarSprite), translate 325 200 (schonoSprite) , translate (-500) 200 (ainaCarSprite), translate (-500) (0) (ainaSprite)]    
+            einar = [ translate 325 200 (schonoSprite), translate (-500) (0) (ainaSprite) ,translate (einarX game) (einarY game) (einarSprite)]
+            ainahead = [translate 0 0 (ainaSprite), translate 50 0 (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
 
+{-The initial state of the game-}
 initial :: EinarGame
 initial = Game
     { state = "menu"
@@ -38,9 +47,11 @@ initial = Game
     , aDown = False
     , sDown = False
     , wDown = False
+    , currenDia = head diapolis1
+    , nextDia = tail diapolis1
     }
 
-
+{- Changes the state of the game depending on different inputs -}
 inputHandler :: Event -> EinarGame -> EinarGame
 inputHandler (EventKey (Char 'd') keyState _ _) game
   | (state game) == "game" && keyState == Down = game { dDown = True }
@@ -55,24 +66,30 @@ inputHandler (EventKey (Char 'a') keyState _ _) game
   | (state game) == "game" && keyState == Down = game { aDown = True }
   | (state game) == "game" && keyState == Up = game { aDown = False }
 
-inputHandler (EventKey (Char 'p') down _ _) game | (state game) == "menu" = game { state = "game" }
+inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" }
+inputHandler (EventKey (Char 't') Down _ _ ) game | (state game) == "talk" = talkingfunc game
 inputHandler _ game = game
 
+{- Changes the cordinates of einar which makes him move -}
 updateFunc :: Float -> EinarGame -> EinarGame
 updateFunc w game
-  | (state game) == "game" && (dDown game) = game { einarX = (einarX game) + 10 }
-  | (state game) == "game" && (aDown game) = game { einarX = (einarX game) - 10 }
-  | (state game) == "game" && (sDown game) = game { einarY = (einarY game) - 10 }
-  | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 10 }
+  | (state game) == "game" && (dDown game) = game { einarX = (einarX game) + 2 }
+  | (state game) == "game" && (aDown game) = game { einarX = (einarX game) - 2 }
+  | (state game) == "game" && (sDown game) = game { einarY = (einarY game) - 2 }
+  | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 2 }
+  | (state game) == "game" && abs((einarX game) - ainaSpriteX) < 50 && abs((einarY game) - ainaSpriteY) < 50 = game {state = "talk"}
   | otherwise = game
 
 
-background :: Color
-background = white
+{- Keeps track of the x cordinate where the aina is positioned-}
+ainaSpriteX :: Float
+ainaSpriteX  = (-500)
 
-laddbackground :: Color
-laddbackground = black
+{- Keeps track of the y cordinate where the aina is positioned -}
+ainaSpriteY :: Float
+ainaSpriteY = 0  
 
+{- The picture of the police car -}
 ainaCarSprite :: Picture
 ainaCarSprite = pictures 
     [ translate (-4) (40) (color black (rectangleSolid 3 126))     -- Car left side
@@ -82,10 +99,9 @@ ainaCarSprite = pictures
     , translate (30) (-20) (color black (circleSolid 20))          -- Back wheel
     , translate (212) (-20) (color black (circleSolid 20))         -- Front wheel
     , translate 60 25 (color black (scale 0.3 0.3 (text "Polis"))) -- Police text
-
-
     ]
 
+{- The picture of the police man ("aina") -}
 ainaSprite :: Picture
 ainaSprite = pictures 
     [ translate (-4) (-40) (color (makeColorI 43 161 204 255) (rectangleSolid 20 60))   -- Body light blue
@@ -99,12 +115,7 @@ ainaSprite = pictures
   , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))           -- Hands
   ]
 
-laddSprite :: Picture
-laddSprite = pictures
-  [translate (-4) (-40) (color white (rectangleSolid 70 20))                           -- white rectangle
-  , translate (-29) (-40) (color (makeColorI 224 218 144 255) (rectangleSolid 30 20))  -- Beige rectangle
-  ]
-
+{- The picture of Einar -}
 einarSprite :: Picture
 einarSprite = pictures
   [ translate (-4) (-40) (color black (rectangleSolid 20 60))                        -- Body
@@ -116,6 +127,7 @@ einarSprite = pictures
   , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))        -- Hand
   ] 
 
+{- The picture of Schono -}
 schonoSprite :: Picture
 schonoSprite = pictures
   [ translate (-4) (-40) (color green (rectangleSolid 20 60))                        -- Body
@@ -127,11 +139,29 @@ schonoSprite = pictures
   , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))        -- Hand
   ]
 
+{- The picture of the talking bubbles-}
+talkBubbleSprite :: EinarGame -> Picture
+talkBubbleSprite game = pictures  
+  [ translate (-540) (-295) (color black (rectangleSolid 3 180))                     -- Left boarder line for chat bubble
+  , translate (540) (-295) (color black (rectangleSolid 3 180))                      -- Right boarder line for chat bubble
+  , translate 0 (-205) (color black (rectangleSolid 1080 3))                         -- Top boarder line for chat bubble
+  , translate (-50) (-325) (color black (scale 0.4 0.4 (text (currenDia game))))      -- The dialogue in the chat bubble.
+  ]
+
+
+
+talkingfunc :: EinarGame -> EinarGame
+talkingfunc game 
+  | (nextDia game) == [] = game {state = "menu"}
+  | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
+
+diapolis1 = ["hej","på","dig"]
+
+background :: Color
+background = white
+
 schono :: IO ()
 schono = display window background schonoSprite
-
-ladd :: IO ()
-ladd = display window laddbackground laddSprite
 
 einar :: IO ()
 einar = display window background einarSprite
