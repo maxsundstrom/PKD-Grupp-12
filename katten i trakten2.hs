@@ -23,6 +23,8 @@ data EinarGame = Game
     , randomGen :: StdGen
     , currenDia :: String
     , nextDia :: [String]
+    , direction :: Float -- -1 = facing left  1 = facing right
+
     } deriving Show
 
 {-The function that runs the game with the help of all the other functions -}
@@ -62,6 +64,7 @@ render game
                             , translate 100 100 $ text (show (einarHP game)),translate (-100) 0 (ainaChief)
                             , translate 100 0 (einarSprite)]
             end = [translate (-200) 0 (scale 0.7 0.7 (text "The end"))]
+
             
 {-The initial state of the game-}
 initial :: EinarGame
@@ -90,8 +93,10 @@ schonoSpriteY = 200
 
 {- Controls what happens with the diffrenet inputs depending on what state the game is in -}
 
+
 inputHandler :: Event -> EinarGame -> EinarGame
 inputHandler (EventKey (Char 'd') keyState _ _) game
+
   | ((state game) == "game" || (state game) == "game2") && keyState == Down = game { dDown = True }
   | ((state game) == "game" || (state game) == "game2") && keyState == Up = game { dDown = False }
 inputHandler (EventKey (Char 's') keyState _ _) game
@@ -112,6 +117,7 @@ inputHandler (EventKey (SpecialKey keySpace) Down _ _) game | (state game) == "f
 inputHandler (EventKey (SpecialKey keySpace) Down _ _) game | (state game) == "fightchief" = fight2 game
 
 inputHandler (EventKey (Char 'p') down _ _) game | (state game) == "menu" = game { state = "game" }
+
 
 inputHandler _ game = game
 
@@ -136,6 +142,7 @@ fight game
       let (gen1, gen2) = split (randomGen game)
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2, currenDia = "Einar recieves " ++ (show $ fst $ (randomR (1,3) gen2 :: (Int, StdGen))) ++ " damage \n Einar deals " ++ (show $ fst $ (randomR (1,5) gen1 :: (Int, StdGen))) ++ " damage" }
 
+
 fight2 :: EinarGame -> EinarGame
 fight2 game
     | (currenDia game) == "Einar defeated his opponent" = game {state = "endscreen"}
@@ -157,6 +164,7 @@ ainaChief = pictures
   , translate (-7) (-45) (color (makeColorI 2 11 64 255) (rectangleSolid 5 40))       -- Pants 3
   , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))         -- Hands
   , translate (-3) (-30) (color yellow (circleSolid 3))]                              -- Badge
+
 
 {- The picture of the police car -}
 ainaCarSprite :: Picture
@@ -189,6 +197,7 @@ ainaSpriteX  = (-500)
 
 {- Keeps track of the y cordinate where the aina is positioned -}
 ainaSpriteY :: Float
+
 ainaSpriteY = 0
 
 {- Keeps track of the x cordinate where ainaChief is positioned -}
@@ -198,6 +207,7 @@ ainaChiefX = (-400)
 {- Keeps track of the y cordinate where ainaChief is positioned -}
 ainaChiefY :: Float
 ainaChiefY = 125 
+
 
 {- The picture of Einar -}
 einarSprite :: Picture
@@ -230,6 +240,7 @@ talkBubbleSprite game = pictures
   , translate (540) (-295) (color black (rectangleSolid 3 180))                      -- Right boarder line for chat bubble
   , translate 0 (-205) (color black (rectangleSolid 1080 3))                         -- Top boarder line for chat bubble
   , translate (-500) (-325) (color black (scale 0.3 0.4 (text (currenDia game))))    -- The dialogue in the chat bubble.
+
   ]
 
 {- Walks throught the list element by element and outputs a game state depending on the element -}
@@ -245,6 +256,13 @@ talkingfunc2 game
   | (nextDia game) == [] = game {state = "fightchief", eHP = 10, einarHP = 20}
   | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
 
+
 diapolis1 = ["Einar: Sho bre","Aina: Good day sir","Einar: You got some chine white??","Aina: You trying to be funny huh?","Aina: Watch out so i don't shoot you"]
 
 diaChief = ["Einar: China white?", "Aina: Mr Einar you're under arrest", "Einar: You wont take me alive!"]
+
+
+background :: Color
+background = white
+
+
