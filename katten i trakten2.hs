@@ -1,4 +1,4 @@
-module Einar(einar) where
+module Einar(main) where
 
 import System.Random
 import Graphics.Gloss
@@ -23,6 +23,7 @@ data EinarGame = Game
     , randomGen :: StdGen
     , currenDia :: String
     , nextDia :: [String]
+    , direction :: Float -- -1 = facing left  1 = facing right
     } deriving Show
 
 {-The function that runs the game with the help of all the other functions -}
@@ -36,12 +37,14 @@ render game
     | state game == "game" = pictures einar
     | state game == "fight" = pictures fight
     | state game == "talk" = pictures ainahead
+    | state game == "game2" = pictures game2
     | otherwise = pictures []
         where
             start = [translate (-650) 0 (scale 0.45 0.5 (text "Play Game = p | Quit game = escape"))]
-            einar = [translate (einarX game) (einarY game) (einarSprite), translate schonoSpriteX schonoSpriteY (schonoSprite) , translate (-500) 200 (ainaCarSprite), translate (-500) (0) (ainaSprite)]
+            einar = [translate (einarX game) (einarY game) $ scale (direction game) 1 (einarSprite), translate schonoSpriteX schonoSpriteY (schonoSprite) , translate (-500) 200 (ainaCarSprite), translate (-500) (0) (ainaSprite)]
             ainahead = [translate 0 0 (ainaSprite), translate 50 0 (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
             fight = [translate 100 100 $ text (show (eHP game)), translate 100 250 $ text (show (einarHP game)), translate (-100) 0 einarSprite]
+            game2 = [translate (einarX game) (einarY game) $ scale (direction game) 1 (einarSprite), text $ show (dDown game)]
             
 {-The initial state of the game-}
 initial :: EinarGame
@@ -59,6 +62,7 @@ initial = Game
     , randomGen = mkStdGen 1
     , currenDia = head diapolis1
     , nextDia = tail diapolis1
+    , direction = 1
     }
 schonoSpriteX :: Float
 schonoSpriteX = 325
@@ -68,17 +72,18 @@ schonoSpriteY = 200
 {- Changes the state of the game depending on different inputs -}
 inputHandler :: Event -> EinarGame -> EinarGame
 inputHandler (EventKey (Char 'd') keyState _ _) game
-  | (state game) == "game" && keyState == Down = game { dDown = True }
-  | (state game) == "game" && keyState == Up = game { dDown = False }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Down = game { dDown = True, direction = 1 }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Up = game { dDown = False }
 inputHandler (EventKey (Char 's') keyState _ _) game
-  | (state game) == "game" && keyState == Down = game { sDown = True }
-  | (state game) == "game" && keyState == Up = game { sDown = False }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Down = game { sDown = True }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Up = game { sDown = False }
 inputHandler (EventKey (Char 'w') keyState _ _) game
-  | (state game) == "game" && keyState == Down = game { wDown = True }
-  | (state game) == "game" && keyState == Up = game { wDown = False }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Down = game { wDown = True }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Up = game { wDown = False }
 inputHandler (EventKey (Char 'a') keyState _ _) game
-  | (state game) == "game" && keyState == Down = game { aDown = True }
-  | (state game) == "game" && keyState == Up = game { aDown = False }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Down = game { aDown = True, direction = -1 }
+  | ((state game) == "game2" || (state game) == "game") && keyState == Up = game { aDown = False }
+
 inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" }
 inputHandler (EventKey (Char 't') Down _ _ ) game | (state game) == "talk" = talkingfunc game
 inputHandler (EventKey (SpecialKey keySpace) Down _ _) game
@@ -92,16 +97,16 @@ updateFunc w game
 {- Changes the cordinates of einar which makes him move -}
   | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "fight", eHP = 10, einarHP = 20}
   | (state game) == "game" && abs((einarX game) - ainaSpriteX) < 50 && abs((einarY game) - ainaSpriteY) < 50 = game {state = "talk"}
-  | (state game) == "game" && (dDown game) = game { einarX = (einarX game) + 3 }
-  | (state game) == "game" && (aDown game) = game { einarX = (einarX game) - 3 }
-  | (state game) == "game" && (sDown game) = game { einarY = (einarY game) - 3 }
-  | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 3 }
+  | (dDown game) = game { einarX = (einarX game) + 3 }
+  | (aDown game) = game { einarX = (einarX game) - 3 }
+  | (sDown game) = game { einarY = (einarY game) - 3 }
+  | (wDown game) = game { einarY = (einarY game) + 3 }
   | otherwise = game
 
 fight :: EinarGame -> EinarGame
 fight game
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
-    | (eHP game) <= 0 = game {state = "game", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
+    | (eHP game) <= 0 = game {state = "game2", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
     | (turn game) = 
       let (gen1, gen2) = split (randomGen game)
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2}
@@ -184,14 +189,3 @@ diapolis1 = ["hej","på","dig"]
 background :: Color
 background = white
 
-schono :: IO ()
-schono = display window background schonoSprite
-
-einar :: IO ()
-einar = display window background einarSprite
-
-aina :: IO ()
-aina = display window background ainaSprite
-
-car :: IO ()
-car = display window background ainaCarSprite
