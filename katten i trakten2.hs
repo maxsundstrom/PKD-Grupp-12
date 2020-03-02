@@ -95,7 +95,7 @@ inputHandler _ game = game
 updateFunc :: Float -> EinarGame -> EinarGame
 updateFunc w game  
 {- Changes the cordinates of einar which makes him move -}
-  | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "fight", eHP = 10, einarHP = 20}
+  | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "fight", eHP = 10, einarHP = 20, currenDia = "Schonon wants to fight"}
   | (state game) == "game" && abs((einarX game) - ainaSpriteX) < 50 && abs((einarY game) - ainaSpriteY) < 50 = game {state = "talk"}
   | (dDown game) = game { einarX = (einarX game) + 3 }
   | (aDown game) = game { einarX = (einarX game) - 3 }
