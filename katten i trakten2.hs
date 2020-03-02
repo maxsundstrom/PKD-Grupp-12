@@ -43,8 +43,8 @@ render game
             start = [translate (-650) 0 (scale 0.45 0.5 (text "Play Game = p | Quit game = escape"))]
             einar = [translate (einarX game) (einarY game) $ scale (direction game) 1 (einarSprite), translate schonoSpriteX schonoSpriteY (schonoSprite) , translate (-500) 200 (ainaCarSprite), translate (-500) (0) (ainaSprite)]
             ainahead = [translate 0 0 (ainaSprite), translate 50 0 (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
-            fight = [translate 100 100 $ text (show (eHP game)), translate 100 250 $ text (show (einarHP game)), translate (-100) 0 einarSprite]
-            game2 = [translate (einarX game) (einarY game) $ scale (direction game) 1 (einarSprite), text $ show (dDown game)]
+            fight = [translate 0 (-25) (talkBubbleSprite game), translate 100 100 $ text (show (eHP game)), translate 100 250 $ text (show (einarHP game)), translate (-200) 0 einarSprite, translate 200 0 $ scale (-1) 1 $ schonoSprite]
+            game2 = [translate (einarX game) (einarY game) $ scale (direction game) 1 (einarSprite)]
             
 {-The initial state of the game-}
 initial :: EinarGame
@@ -59,9 +59,9 @@ initial = Game
     , eHP = 10
     , einarHP = 20
     , turn = True
-    , randomGen = mkStdGen 1
-    , currenDia = head diapolis1
-    , nextDia = tail diapolis1
+    , randomGen = mkStdGen 0
+    , currenDia = []
+    , nextDia = []
     , direction = 1
     }
 schonoSpriteX :: Float
@@ -84,10 +84,10 @@ inputHandler (EventKey (Char 'a') keyState _ _) game
   | ((state game) == "game2" || (state game) == "game") && keyState == Down = game { aDown = True, direction = -1 }
   | ((state game) == "game2" || (state game) == "game") && keyState == Up = game { aDown = False }
 
-inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" }
-inputHandler (EventKey (Char 't') Down _ _ ) game | (state game) == "talk" = talkingfunc game
+inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" } 
 inputHandler (EventKey (SpecialKey keySpace) Down _ _) game
   | (state game) == "fight" = fight game
+  | (state game) == "talk" = talkingfunc game
 inputHandler (EventKey (Char 'p') down _ _) game 
     | (state game) == "menu" = game { state = "game" }
 inputHandler _ game = game
@@ -105,11 +105,12 @@ updateFunc w game
 
 fight :: EinarGame -> EinarGame
 fight game
+    | (currenDia game) == "Einar defeated his opponent" = game {state = "game2", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
-    | (eHP game) <= 0 = game {state = "game2", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
+    | (eHP game) <= 0 = game {currenDia = "Einar defeated his opponent"} 
     | (turn game) = 
       let (gen1, gen2) = split (randomGen game)
-      in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2}
+      in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2, currenDia = "Einar recieves " ++ (show $ fst $ (randomR (1,3) gen2 :: (Int, StdGen))) ++ " damage \n Einar deals " ++ (show $ fst $ (randomR (1,5) gen1 :: (Int, StdGen))) ++ " damage" }
 
 {- The picture of the police car -}
 ainaCarSprite :: Picture
@@ -174,7 +175,7 @@ talkBubbleSprite game = pictures
   [ translate (-540) (-295) (color black (rectangleSolid 3 180))                     -- Left boarder line for chat bubble
   , translate (540) (-295) (color black (rectangleSolid 3 180))                      -- Right boarder line for chat bubble
   , translate 0 (-205) (color black (rectangleSolid 1080 3))                         -- Top boarder line for chat bubble
-  , translate (-50) (-325) (color black (scale 0.4 0.4 (text (currenDia game))))      -- The dialogue in the chat bubble.
+  , translate (-500) (-325) (color black (scale 0.3 0.4 (text (currenDia game))))      -- The dialogue in the chat bubble.
   ]
 
 
