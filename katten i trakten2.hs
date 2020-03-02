@@ -97,12 +97,11 @@ updateFunc w game
   | (state game) == "game" && (sDown game) = game { einarY = (einarY game) - 3 }
   | (state game) == "game" && (wDown game) = game { einarY = (einarY game) + 3 }
   | otherwise = game
-  | otherwise = game
 
 fight :: EinarGame -> EinarGame
 fight game
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
-    | (eHP game) <= 0 = game {state = "game", einarX = 0, einarY = 0}
+    | (eHP game) <= 0 = game {state = "game", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
     | (turn game) = 
       let (gen1, gen2) = split (randomGen game)
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2}
