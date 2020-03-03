@@ -40,6 +40,7 @@ render game
     | state game == "game2" = pictures copcar
     | state game == "talkChief" = pictures talkingchief
     | state game == "fightchief" = pictures fightingchief
+    | state game == "talkSchono" = pictures talkingSchono
     | state game == "endscreen" = pictures end
     | otherwise = pictures []
         where
@@ -61,6 +62,9 @@ render game
             fightingchief = [translate 0 (-25) (talkBubbleSprite game), translate (-150) 100 $ text (show (eHP game))
                             , translate 100 100 $ text (show (einarHP game)),translate (-100) 0 (ainaChief)
                             , translate 100 0 $ scale (-1) 1 $ (einarSprite)]
+            talkingSchono = [translate 0 (-25) (talkBubbleSprite game)
+                            , translate (-100) 0 einarSprite
+                            , translate 100 0 $ scale (-1) 1 $ schonoSprite]
             end = [translate (-200) 0 (scale 0.7 0.7 (text "The end"))] 
 
 
@@ -108,10 +112,11 @@ inputHandler (EventKey (Char 'a') keyState _ _) game
 
 inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" }
 inputHandler (EventKey (SpecialKey keySpace) Down _ _ ) game | (state game) == "talk" = talkingfunc game
-inputHandler (EventKey (SpecialKey keySpace) Down _ _ ) game | (state game) == "talkChief" = talkingfunc2 game
+                                                             | (state game) == "talkChief" = talkingfunc2 game
+                                                             | (state game) == "talkSchono" = talkingfunc3 game
+                                                             | (state game) == "fight" = fight game
+                                                             | (state game) == "fightchief" = fight2 game
 
-inputHandler (EventKey (SpecialKey keySpace) Down _ _) game | (state game) == "fight" = fight game
-inputHandler (EventKey (SpecialKey keySpace) Down _ _) game | (state game) == "fightchief" = fight2 game
 
 inputHandler (EventKey (Char 'p') down _ _) game | (state game) == "menu" = game { state = "game" }
 
@@ -120,8 +125,7 @@ inputHandler _ game = game
 updateFunc :: Float -> EinarGame -> EinarGame
 updateFunc w game  
 {- Changes the cordinates of einar which makes him move -}
-  | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "fight", eHP = 10, einarHP = 20}
-
+  | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "talkSchono", currenDia = head (diaSchono), nextDia = tail (diaSchono)}
   | (state game) == "game" && abs((einarX game) - ainaSpriteX) < 50 && abs((einarY game) - ainaSpriteY) < 50 = game {state = "talk", currenDia = head (diapolis1), nextDia = tail (diapolis1)}
   | (state game) == "game2" && abs((einarX game) - ainaChiefX) < 50 && abs((einarY game) - ainaChiefY) < 50 = game {state = "talkChief", currenDia = head (diaChief), nextDia = tail (diaChief)}
   | ((state game) == "game" || (state game) == "game2") && (dDown game) = game { einarX = (einarX game) + 3 }
@@ -132,7 +136,6 @@ updateFunc w game
 
 fight :: EinarGame -> EinarGame
 fight game
-
     | (currenDia game) == "Einar defeated his opponent" = game {state = "game2", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
     | (eHP game) <= 0 = game {currenDia = "Einar defeated his opponent"} 
@@ -188,13 +191,13 @@ ainaSprite = pictures
   , translate (-7) (-45) (color (makeColorI 2 11 64 255) (rectangleSolid 5 40))       -- Pants 3
   , translate (-6) (-45) (color (makeColorI 255 173 201 255) (circleSolid 5))         -- Hands
   ]
+
 {- Keeps track of the x cordinate where the aina is positioned-}
 ainaSpriteX :: Float
 ainaSpriteX  = (-500)
 
 {- Keeps track of the y cordinate where the aina is positioned -}
 ainaSpriteY :: Float
-
 ainaSpriteY = 0
 
 {- Keeps track of the x cordinate where ainaChief is positioned -}
@@ -253,6 +256,15 @@ talkingfunc2 game
   | (nextDia game) == [] = game {state = "fightchief", eHP = 10, einarHP = 20}
   | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
 
+{- Walks throught the list element by element and outputs a game state depending on the element. -}
+talkingfunc3 :: EinarGame -> EinarGame
+--Variant: Lenght of the list
+talkingfunc3 game 
+  | (nextDia game) == [] = game {state = "fight", eHP = 7, einarHP = 20}
+  | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
+
 diapolis1 = ["Einar: Sho bre","Aina: Good day sir","Einar: You got some chine white??","Aina: You trying to be funny huh?","Aina: Watch out so i don't shoot you"]
 
 diaChief = ["Einar: China white?", "Aina: Mr Einar you're under arrest", "Einar: You wont take me alive!"]
+
+diaSchono = ["Einar: China white?", "Schono: Yeah, wanna fight me for it?", "Aina: 1v1 bro"]
