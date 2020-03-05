@@ -97,6 +97,7 @@ schonoSpriteY = 200
 
 {- Controls what happens with the diffrenet inputs depending on what state the game is in -}
 inputHandler :: Event -> EinarGame -> EinarGame
+-- Used to know when one of the moving keys is pressed down or not
 inputHandler (EventKey (Char 'd') keyState _ _) game
   | ((state game) == "game" || (state game) == "game2") && keyState == Down = game { dDown = True, direction = 1 }
   | ((state game) == "game" || (state game) == "game2") && keyState == Up = game { dDown = False }
@@ -110,24 +111,27 @@ inputHandler (EventKey (Char 'a') keyState _ _) game
   | ((state game) == "game" || (state game) == "game2") && keyState == Down = game { aDown = True, direction = (-1)  }
   | ((state game) == "game" || (state game) == "game2") && keyState == Up = game { aDown = False }
 
+-- When p is pressed exit the main menu and go to the game state.
 inputHandler (EventKey (Char 'p') Down _ _ ) game | (state game) == "menu" = game { state = "game" }
+
+-- Space is used to progress talking and fighting in all stages of the game
 inputHandler (EventKey (SpecialKey keySpace) Down _ _ ) game | (state game) == "talk" = talkingfunc game
                                                              | (state game) == "talkChief" = talkingfunc2 game
                                                              | (state game) == "talkSchono" = talkingfunc3 game
                                                              | (state game) == "fight" = fight game
                                                              | (state game) == "fightchief" = fight2 game
-
-
-inputHandler (EventKey (Char 'p') down _ _) game | (state game) == "menu" = game { state = "game" }
-
 inputHandler _ game = game
 
+{- Changes the cordinates of einar which makes him move and handles what happens when you come close to certain characters -}
 updateFunc :: Float -> EinarGame -> EinarGame
-updateFunc w game  
-{- Changes the cordinates of einar which makes him move -}
+updateFunc w game 
+-- Enables the talking sequence with shono
   | (state game) == "game" && abs((einarX game) - schonoSpriteX) < 50 && abs((einarY game) - schonoSpriteY) < 50 = game {state = "talkSchono", currenDia = head (diaSchono), nextDia = tail (diaSchono)}
+  -- Enables the talking sequence with aina
   | (state game) == "game" && abs((einarX game) - ainaSpriteX) < 50 && abs((einarY game) - ainaSpriteY) < 50 = game {state = "talk", currenDia = head (diapolis1), nextDia = tail (diapolis1)}
+  -- Enables the talking sequence with the police chief
   | (state game) == "game2" && abs((einarX game) - ainaChiefX) < 50 && abs((einarY game) - ainaChiefY) < 50 = game {state = "talkChief", currenDia = head (diaChief), nextDia = tail (diaChief)}
+  -- Enables einars movement
   | ((state game) == "game" || (state game) == "game2") && (dDown game) = game { einarX = (einarX game) + 3 }
   | ((state game) == "game" || (state game) == "game2") && (aDown game) = game { einarX = (einarX game) - 3 }
   | ((state game) == "game" || (state game) == "game2") && (sDown game) = game { einarY = (einarY game) - 3 }
@@ -136,20 +140,30 @@ updateFunc w game
 
 fight :: EinarGame -> EinarGame
 fight game
+-- Checks if opponent deafeated
     | (currenDia game) == "Einar defeated his opponent" = game {state = "game2", einarX = 0, einarY = 0, dDown = False, wDown = False, sDown = False, aDown = False}
+    -- If einars hp is reduced to zero
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
+    -- If enemy hp is reduced to zero
     | (eHP game) <= 0 = game {currenDia = "Einar defeated his opponent"} 
-    | (turn game) = 
+    | otherwise = 
+      -- Generates two new StdGen from the current one
       let (gen1, gen2) = split (randomGen game)
+      -- Removes random amount from einars hp and opponents hp
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2, currenDia = "Einar recieves " ++ (show $ fst $ (randomR (1,3) gen2 :: (Int, StdGen))) ++ " damage \n Einar deals " ++ (show $ fst $ (randomR (1,5) gen1 :: (Int, StdGen))) ++ " damage" }
 
 fight2 :: EinarGame -> EinarGame
 fight2 game
+-- Checks if opponent deafeated
     | (currenDia game) == "Einar defeated his opponent" = game {state = "endscreen"}
+    -- If einars hp is reduced to zero
     | (einarHP game) <= 0 = game {state = "menu", einarX = 0, einarY = 0}
+    -- If enemy hp is reduced to zero
     | (eHP game) <= 0 = game {currenDia = "Einar defeated his opponent"} 
-    | (turn game) = 
+    | otherwise = 
+      -- Removes random amount from einars hp and opponents hp
       let (gen1, gen2) = split (randomGen game)
+      -- Removes random amount from einars hp and opponents hp
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2, currenDia = "Einar recieves " ++ (show $ fst $ (randomR (1,3) gen2 :: (Int, StdGen))) ++ " damage \n Einar deals " ++ (show $ fst $ (randomR (1,5) gen1 :: (Int, StdGen))) ++ " damage" }
 
 ainaChief :: Picture
@@ -169,13 +183,13 @@ ainaChief = pictures
 {- The picture of the police car -}
 ainaCarSprite :: Picture
 ainaCarSprite = pictures 
-    [ translate (-4) (40) (color black (rectangleSolid 3 126))   -- Car left side
-    , translate (120) (101) (color black (rectangleSolid 250 3)) -- Car top
-    , translate (120) (-23) (color black (rectangleSolid 250 3)) -- Car bottom
-    , translate (245) (40) (color black (rectangleSolid 3 126))  -- Car right side
-    , translate (30) (-20) (color black (circleSolid 20))        -- Back wheel
-    , translate (212) (-20) (color black (circleSolid 20))       -- Front wheel
-    , translate 60 25 (color black (scale 0.3 0.3 (text "Polis")))
+    [ translate (-4) (40) (color black (rectangleSolid 3 126))     -- Car left side
+    , translate (120) (101) (color black (rectangleSolid 250 3))   -- Car top
+    , translate (120) (-23) (color black (rectangleSolid 250 3))   -- Car bottom
+    , translate (245) (40) (color black (rectangleSolid 3 126))    -- Car right side
+    , translate (30) (-20) (color black (circleSolid 20))          -- Back wheel
+    , translate (212) (-20) (color black (circleSolid 20))         -- Front wheel
+    , translate 60 25 (color black (scale 0.3 0.3 (text "Polis"))) -- Polis text
     ]
 
 {- The picture of the police man ("aina") -}
@@ -244,26 +258,26 @@ talkBubbleSprite game = pictures
 
 {- Walks throught the list element by element and outputs a game state depending on the element -}
 talkingfunc :: EinarGame -> EinarGame
---Variant: Lenght of the list
+--Variant: Lenght of diapolis1
 talkingfunc game 
   | (nextDia game) == [] = game {state = "game2", einarY = 0, einarX = 0, dDown = False, wDown = False, sDown = False, aDown = False}
   | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
 
 {- Walks throught the list element by element and outputs a game state depending on the element. -}
 talkingfunc2 :: EinarGame -> EinarGame
---Variant: Lenght of the list
+--Variant: Lenght of diaChief
 talkingfunc2 game 
   | (nextDia game) == [] = game {state = "fightchief", eHP = 10, einarHP = 20}
   | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
 
 {- Walks throught the list element by element and outputs a game state depending on the element. -}
 talkingfunc3 :: EinarGame -> EinarGame
---Variant: Lenght of the list
+--Variant: Lenght of diaschono
 talkingfunc3 game 
   | (nextDia game) == [] = game {state = "fight", eHP = 7, einarHP = 20}
   | otherwise = game {currenDia = head (nextDia game), nextDia = tail (nextDia game)}
 
-diapolis1 = ["Einar: Sho bre","Aina: Good day sir","Einar: You got some chine white??","Aina: You trying to be funny huh?","Aina: Watch out so i don't shoot you"]
+diapolis1 = ["Einar: Sho bre","Aina: Good day sir","Einar: You got some china white??","Aina: You trying to be funny huh?","Aina: Watch out so i don't shoot you"]
 
 diaChief = ["Einar: China white?", "Aina: Mr Einar you're under arrest", "Einar: You wont take me alive!"]
 
