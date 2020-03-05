@@ -45,6 +45,7 @@ render game
     | otherwise = pictures []
         where
             start = [translate (-650) 0 (scale 0.45 0.5 (text "Play Game = p | Quit game = escape")), translate (-325) 200 (scale 0.45 0.5 (text "Einar the game"))]
+
             einar = [translate 0 0 (streetSprite),translate schonoSpriteX schonoSpriteY (schonoSprite), translate (-500) (0) (ainaSprite), translate (einarX game) (einarY game) $ scale (direction game) 1 $ (einarSprite)]
             ainahead = [translate 0 0 (streetSprite) ,translate 0 0 (ainaSprite), translate 50 0 $ scale (-1) 1 $ (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
             fight = [translate 0 0 (streetSprite) ,translate 0 (-25) (talkBubbleSprite game), translate 100 100 $ text (show (eHP game))
@@ -55,10 +56,13 @@ render game
                     , translate (-475) 100 (ainaSprite), translate (-425) 100 (ainaSprite)
                     , translate (-380) 100 (ainaChief), translate (einarX game) (einarY game) $ scale (direction game) 1 $ (einarSprite)]
             talkingchief = [translate 0 0 (streetSprite),translate (-500) (-175) (ainaCarSprite), translate (-500) 0 (ainaSprite)
+
+
                             , translate (-450) 0 (ainaSprite), translate (-400) 0 (ainaSprite)
                             , translate (-475) 100 (ainaSprite), translate (-425) 100 (ainaSprite)
                             , translate (-380) 100 (ainaChief), translate (-340) 100 $ scale (-1) 1 $ (einarSprite)
                             , translate 0 0 (talkBubbleSprite game)]
+
             fightingchief = [translate 0 0 (streetSprite) ,translate 0 (-25) (talkBubbleSprite game), translate (-150) 100 $ text (show (eHP game))
                             , translate 100 100 $ text (show (einarHP game)), translate (-100) 0 (ainaChief)
                             , translate 100 0 $ scale (-1) 1 $ (einarSprite), translate (-500) (-175) (ainaCarSprite), translate (-500) 0 (ainaSprite)
@@ -68,6 +72,7 @@ render game
                             , translate (-100) 0 einarSprite
                             , translate 100 0 $ scale (-1) 1 $ schonoSprite]
             end = [translate 0 0 (streetSprite) ,translate (-200) 0 (scale 0.7 0.7 (text "The end"))] 
+
 
 
             
@@ -95,7 +100,9 @@ schonoSpriteX = 325
 
 {- Keeps track of the y cordinate of schono -}
 schonoSpriteY :: Float
+
 schonoSpriteY = (-100)
+
 
 {- Controls what happens with the diffrenet inputs depending on what state the game is in -}
 inputHandler :: Event -> EinarGame -> EinarGame
@@ -168,6 +175,7 @@ fight2 game
       -- Removes random amount from einars hp and opponents hp
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2, currenDia = "Einar recieves " ++ (show $ fst $ (randomR (1,3) gen2 :: (Int, StdGen))) ++ " damage \n Einar deals " ++ (show $ fst $ (randomR (1,5) gen1 :: (Int, StdGen))) ++ " damage" }
 
+
 streetSprite :: Picture
 streetSprite = pictures 
     [ translate (0) (350) (color black (rectangleSolid 1600 250)) -- asphalt
@@ -203,6 +211,7 @@ streetSprite = pictures
     , translate (400) (300) (color (makeColorI 108 122 137 255) (rectangleSolid 25 25)) -- lightpost 3
     , translate (415) (300) (color (makeColorI 238 238 0 255) (rectangleSolid 10 25)) -- lightbulb 3
     ] 
+
 
 ainaChief :: Picture
 ainaChief = pictures 
