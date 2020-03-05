@@ -45,27 +45,34 @@ render game
     | otherwise = pictures []
         where
             start = [translate (-650) 0 (scale 0.45 0.5 (text "Play Game = p | Quit game = escape")), translate (-325) 200 (scale 0.45 0.5 (text "Einar the game"))]
-            einar = [translate schonoSpriteX schonoSpriteY (schonoSprite), translate (-500) (0) (ainaSprite), translate (einarX game) (einarY game) $ scale (direction game) 1 $ (einarSprite)]
-            ainahead = [translate 0 0 (ainaSprite), translate 50 0 $ scale (-1) 1 $ (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
-            fight = [translate 0 (-25) (talkBubbleSprite game), translate 100 100 $ text (show (eHP game))
+
+            einar = [translate 0 0 (streetSprite),translate schonoSpriteX schonoSpriteY (schonoSprite), translate (-500) (0) (ainaSprite), translate (einarX game) (einarY game) $ scale (direction game) 1 $ (einarSprite)]
+            ainahead = [translate 0 0 (streetSprite) ,translate 0 0 (ainaSprite), translate 50 0 $ scale (-1) 1 $ (einarSprite), translate 0 (-25) (talkBubbleSprite game)] 
+            fight = [translate 0 0 (streetSprite) ,translate 0 (-25) (talkBubbleSprite game), translate 100 100 $ text (show (eHP game))
                     , translate (-150) 100 $ text (show (einarHP game)), translate (-100) 0 einarSprite
                     , translate 100 0 $ scale (-1) 1 $ schonoSprite]
-            copcar = [ translate (-500) 200 (ainaCarSprite), translate (-500) 0 (ainaSprite)
+            copcar = [ translate 0 0 (streetSprite) ,translate (-500) (-175) (ainaCarSprite), translate (-500) 0 (ainaSprite)
                     , translate (-450) 0 (ainaSprite), translate (-400) 0 (ainaSprite)
                     , translate (-475) 100 (ainaSprite), translate (-425) 100 (ainaSprite)
                     , translate (-380) 100 (ainaChief), translate (einarX game) (einarY game) $ scale (direction game) 1 $ (einarSprite)]
-            talkingchief = [translate (-500) 200 (ainaCarSprite), translate (-500) 0 (ainaSprite)
+            talkingchief = [translate 0 0 (streetSprite),translate (-500) (-175) (ainaCarSprite), translate (-500) 0 (ainaSprite)
+
+
                             , translate (-450) 0 (ainaSprite), translate (-400) 0 (ainaSprite)
                             , translate (-475) 100 (ainaSprite), translate (-425) 100 (ainaSprite)
                             , translate (-380) 100 (ainaChief), translate (-340) 100 $ scale (-1) 1 $ (einarSprite)
                             , translate 0 0 (talkBubbleSprite game)]
-            fightingchief = [translate 0 (-25) (talkBubbleSprite game), translate (-150) 100 $ text (show (eHP game))
-                            , translate 100 100 $ text (show (einarHP game)),translate (-100) 0 (ainaChief)
-                            , translate 100 0 $ scale (-1) 1 $ (einarSprite)]
-            talkingSchono = [translate 0 (-25) (talkBubbleSprite game)
+
+            fightingchief = [translate 0 0 (streetSprite) ,translate 0 (-25) (talkBubbleSprite game), translate (-150) 100 $ text (show (eHP game))
+                            , translate 100 100 $ text (show (einarHP game)), translate (-100) 0 (ainaChief)
+                            , translate 100 0 $ scale (-1) 1 $ (einarSprite), translate (-500) (-175) (ainaCarSprite), translate (-500) 0 (ainaSprite)
+                            , translate (-450) 0 (ainaSprite), translate (-400) 0 (ainaSprite)
+                            , translate (-475) 100 (ainaSprite), translate (-425) 100 (ainaSprite)]
+            talkingSchono = [ translate 0 0 (streetSprite), translate 0 (-25) (talkBubbleSprite game)
                             , translate (-100) 0 einarSprite
                             , translate 100 0 $ scale (-1) 1 $ schonoSprite]
-            end = [translate (-200) 0 (scale 0.7 0.7 (text "The end"))] 
+            end = [translate 0 0 (streetSprite) ,translate (-200) 0 (scale 0.7 0.7 (text "The end"))] 
+
 
 
             
@@ -93,7 +100,9 @@ schonoSpriteX = 325
 
 {- Keeps track of the y cordinate of schono -}
 schonoSpriteY :: Float
-schonoSpriteY = 200
+
+schonoSpriteY = (-100)
+
 
 {- Controls what happens with the diffrenet inputs depending on what state the game is in -}
 inputHandler :: Event -> EinarGame -> EinarGame
@@ -165,6 +174,44 @@ fight2 game
       let (gen1, gen2) = split (randomGen game)
       -- Removes random amount from einars hp and opponents hp
       in game {einarHP = (einarHP game) - (fst(randomR (1,5) (gen1))), eHP = (eHP game) - (fst(randomR (1,3) gen2)), randomGen = gen2, currenDia = "Einar recieves " ++ (show $ fst $ (randomR (1,3) gen2 :: (Int, StdGen))) ++ " damage \n Einar deals " ++ (show $ fst $ (randomR (1,5) gen1 :: (Int, StdGen))) ++ " damage" }
+
+
+streetSprite :: Picture
+streetSprite = pictures 
+    [ translate (0) (350) (color black (rectangleSolid 1600 250)) -- asphalt
+    , translate (0) (220) (color (makeColorI 46 49 49 255) (rectangleSolid 1600 20)) -- street edge
+
+    , translate (400) (25) (color (makeColorI 150 40 27 255) (rectangleSolid 300 75)) -- garden
+    , translate (300) (150) (color (makeColorI 211 84 0 255) (rectangleSolid 35 250)) --tree1 trunk
+    , translate (500) (150) (color (makeColorI 211 84 0 255) (rectangleSolid 35 250)) --tree2 trunk
+    , translate (250) (200) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree1
+    , translate (300) (200) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree1
+    , translate (350) (200) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree1
+    , translate (275) (250) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree1
+    , translate (325) (250) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree1
+    , translate (450) (200) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree2
+    , translate (500) (200) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree2
+    , translate (550) (200) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree2
+    , translate (475) (250) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree2
+    , translate (525) (250) (color (makeColorI 0 230 64 255) (circleSolid 40)) --tree2 
+    , translate (0) (375) (color white (rectangleSolid 100 3)) -- street line
+    , translate (300) (375) (color white (rectangleSolid 100 3)) -- street line
+    , translate (600) (375) (color white (rectangleSolid 100 3)) -- street line
+    , translate (-300) (375) (color white (rectangleSolid 100 3)) -- street line
+    , translate (-600) (375) (color white (rectangleSolid 100 3)) -- street line
+    , translate (-350) (-400) (color (makeColorI 108 122 137 255) (rectangleSolid 1000 75)) -- house 1
+    , translate (550) (-400) (color (makeColorI 108 122 137 255) (rectangleSolid 450 75)) -- house 2
+    , translate (0) (200) (color (makeColorI 108 122 137 255) (rectangleSolid 10 200)) -- lightpost 1
+    , translate (0) (300) (color (makeColorI 108 122 137 255) (rectangleSolid 25 25)) -- lightpost 1
+    , translate (15) (300) (color (makeColorI 238 238 0 255) (rectangleSolid 10 25)) -- lightbulb 1
+    , translate (-400) (200) (color (makeColorI 108 122 137 255) (rectangleSolid 10 200)) -- lightpost 2
+    , translate (-400) (300) (color (makeColorI 108 122 137 255) (rectangleSolid 25 25)) -- lightpost 2
+    , translate (-385) (300) (color (makeColorI 238 238 0 255) (rectangleSolid 10 25)) -- lightbulb 2
+    , translate (400) (200) (color (makeColorI 108 122 137 255) (rectangleSolid 10 200)) -- lightpost 3
+    , translate (400) (300) (color (makeColorI 108 122 137 255) (rectangleSolid 25 25)) -- lightpost 3
+    , translate (415) (300) (color (makeColorI 238 238 0 255) (rectangleSolid 10 25)) -- lightbulb 3
+    ] 
+
 
 ainaChief :: Picture
 ainaChief = pictures 
